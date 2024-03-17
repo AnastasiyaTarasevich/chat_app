@@ -31,7 +31,7 @@ function connect(event) {
 }
 
 
-function onConnected() {
+async function onConnected() {
     stompClient.subscribe(`/user/${nickname}/queue/messages`, onMessageReceived);
     stompClient.subscribe(`/user/public`, onMessageReceived);
 
@@ -41,7 +41,8 @@ function onConnected() {
         JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
     );
     document.querySelector('#connected-user-fullname').textContent = fullname;
-    findAndDisplayConnectedUsers().then();
+    await findAndDisplayConnectedUsers(); // Дождаться выполнения запроса
+    await findAndDisplayOfflineUsers();   // Дождаться выполнения запроса
 }
 
 async function findAndDisplayConnectedUsers() {
@@ -59,6 +60,21 @@ async function findAndDisplayConnectedUsers() {
             connectedUsersList.appendChild(separator);
         }
     });
+}
+
+async function findAndDisplayOfflineUsers() {
+    const offlineUserResponse = await fetch('/offlineUsers');
+    let offlineUsers = await offlineUserResponse.json();
+    const offlineUsersList = document.getElementById('offlineUsers');
+    offlineUsersList.innerHTML = '';
+    offlineUsers.forEach(user => {
+        appendOfflineUserElement(user, offlineUsersList);
+        if (offlineUsers.indexOf(user) < offlineUsers.length - 1) {
+            const separator = document.createElement('li');
+            separator.classList.add('separator');
+            offlineUsersList.appendChild(separator);
+        }
+    })
 }
 
 function appendUserElement(user, connectedUsersList) {
@@ -84,6 +100,31 @@ function appendUserElement(user, connectedUsersList) {
     listItem.addEventListener('click', userItemClick);
 
     connectedUsersList.appendChild(listItem);
+}
+function appendOfflineUserElement(user,  offlineUsersList)
+{
+    const listItem1 = document.createElement('li');
+    listItem1.classList.add('user-item');
+    listItem1.id = user.nickName;
+
+    const userImage1 = document.createElement('img');
+    userImage1.src = '../img/user_icon.png';
+    userImage1.alt = user.fullName;
+
+    const usernameSpan1 = document.createElement('span');
+    usernameSpan1.textContent = user.fullName;
+
+    const receivedMsgs1 = document.createElement('span');
+    receivedMsgs1.textContent = '0';
+    receivedMsgs1.classList.add('nbr-msg', 'hidden');
+
+    listItem1.appendChild(userImage1);
+    listItem1.appendChild(usernameSpan1);
+    listItem1.appendChild(receivedMsgs1);
+
+    listItem1.addEventListener('click', userItemClick);
+
+    offlineUsersList.appendChild(listItem1);
 }
 
 function userItemClick(event) {
@@ -155,6 +196,7 @@ function sendMessage(event) {
 
 async function onMessageReceived(payload) {
     await findAndDisplayConnectedUsers();
+    await findAndDisplayOfflineUsers();
     console.log('Message received', payload);
     const message = JSON.parse(payload.body);
     if (selectedUserId && selectedUserId === message.senderId) {

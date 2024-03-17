@@ -1,4 +1,4 @@
-package com.nastya.chatapp;
+package com.nastya.chatapp.user;
 
 import com.nastya.chatapp.user.Status;
 import com.nastya.chatapp.user.User;

@@ -1,2 +1,5 @@
-package com.nastya.chatapp.user;public class Status {
+package com.nastya.chatapp.user;
+
+public enum Status {
+    ONLINE, OFFLINE;
 }

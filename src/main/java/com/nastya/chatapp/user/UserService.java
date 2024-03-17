@@ -1,7 +1,8 @@
-package com.nastya.chatapp;
+package com.nastya.chatapp.user;
 
 import com.nastya.chatapp.user.Status;
 import com.nastya.chatapp.user.User;
+import com.nastya.chatapp.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,7 @@ public class UserService {
     }
 
     public void disconnect(User user) {
-        var storedUser=repository.findById(user.getNickname())
+        var storedUser=repository.findById(user.getNickName())
                 .orElse(null);
         if(storedUser!=null)
         {
@@ -32,4 +33,7 @@ public class UserService {
         return repository.findAllByStatus(Status.ONLINE);
     }
 
+    public List<User> findOfflineUsers() {
+        return repository.findAllByStatus(Status.OFFLINE);
+    }
 }
