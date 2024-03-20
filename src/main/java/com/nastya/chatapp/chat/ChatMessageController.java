@@ -8,12 +8,13 @@ import org.springframework.messaging.handler.annotation.Payload;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class ChatMessageController {
     private final SimpMessagingTemplate messagingTemplate;
@@ -37,4 +38,13 @@ public class ChatMessageController {
                                                               @PathVariable("recipientId") String recipientId) {
         return ResponseEntity.ok(chatMessageService.findChatMessages(senderId, recipientId));
     }
+    @PutMapping("/updateStatus")
+    public ResponseEntity<ChatMessage> updateMessageStatus(
+            @ModelAttribute ChatMessage message
+    ) {
+        message.setStatus(MessageStatus.DELIVERED);
+        boolean updatedMessage = chatMessageService.updateMessageStatus(message);
+        return (ResponseEntity<ChatMessage>) (updatedMessage ? ResponseEntity.ok() : ResponseEntity.badRequest());
+    }
+
 }

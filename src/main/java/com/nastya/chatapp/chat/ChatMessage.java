@@ -21,5 +21,6 @@ public class ChatMessage
     private String recipientId;
     private String content;
     private Date timestamp;
+    private MessageStatus status;
 
 }

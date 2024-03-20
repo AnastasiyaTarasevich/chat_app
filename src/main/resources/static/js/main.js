@@ -14,6 +14,9 @@ let nickname = null;
 let fullname = null;
 let selectedUserId = null;
 
+
+
+
 function connect(event) {
     nickname = document.querySelector('#nickname').value.trim();
     fullname = document.querySelector('#fullname').value.trim();
@@ -41,8 +44,8 @@ async function onConnected() {
         JSON.stringify({nickName: nickname, fullName: fullname, status: 'ONLINE'})
     );
     document.querySelector('#connected-user-fullname').textContent = fullname;
-    await findAndDisplayConnectedUsers(); // Дождаться выполнения запроса
-    await findAndDisplayOfflineUsers();   // Дождаться выполнения запроса
+    await findAndDisplayConnectedUsers();
+    await findAndDisplayOfflineUsers();
 }
 
 async function findAndDisplayConnectedUsers() {
@@ -75,6 +78,8 @@ async function findAndDisplayOfflineUsers() {
             offlineUsersList.appendChild(separator);
         }
     })
+    console.log('Offline Users:', offlineUsers); // Добавляем эту строку
+    // Остальной код
 }
 
 function appendUserElement(user, connectedUsersList) {
@@ -157,6 +162,22 @@ function displayMessage(senderId, content) {
     message.textContent = content;
     messageContainer.appendChild(message);
     chatArea.appendChild(messageContainer);
+    sendStatus(message);
+}
+function sendStatus(data){
+
+    $.ajax({
+        url: '/updateStatus',
+        type: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(response) {
+            console.log('Request successful');
+        },
+        error: function(xhr, status, error) {
+            console.error('Request failed:', error);
+        }
+    });
 }
 
 async function fetchAndDisplayUserChat() {
@@ -167,11 +188,12 @@ async function fetchAndDisplayUserChat() {
         displayMessage(chat.senderId, chat.content);
     });
     chatArea.scrollTop = chatArea.scrollHeight;
+    sendStatus(userChatResponse);
 }
 
 
 function onError() {
-    connectingElement.textContent = 'Could not connect to WebSocket server. Please refresh this page to try again!';
+    connectingElement.textContent = "Could not connect to WebSocket server. Please refresh this page to try again!";
     connectingElement.style.color = 'red';
 }
 
@@ -183,7 +205,9 @@ function sendMessage(event) {
             senderId: nickname,
             recipientId: selectedUserId,
             content: messageInput.value.trim(),
-            timestamp: new Date()
+            timestamp: new Date(),
+
+
         };
         stompClient.send("/app/chat", {}, JSON.stringify(chatMessage));
         displayMessage(nickname, messageInput.value.trim());
@@ -195,7 +219,7 @@ function sendMessage(event) {
 
 
 async function onMessageReceived(payload) {
-    await findAndDisplayConnectedUsers();
+     await findAndDisplayConnectedUsers();
     await findAndDisplayOfflineUsers();
     console.log('Message received', payload);
     const message = JSON.parse(payload.body);
@@ -209,7 +233,7 @@ async function onMessageReceived(payload) {
     } else {
         messageForm.classList.add('hidden');
     }
-
+    console.log(message);
     const notifiedUser = document.querySelector(`#${message.senderId}`);
     if (notifiedUser && !notifiedUser.classList.contains('active')) {
         const nbrMsg = notifiedUser.querySelector('.nbr-msg');
