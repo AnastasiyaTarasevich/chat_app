@@ -7,12 +7,9 @@ import org.springframework.messaging.handler.annotation.Payload;
 
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,12 +36,16 @@ public class ChatMessageController {
         return ResponseEntity.ok(chatMessageService.findChatMessages(senderId, recipientId));
     }
     @PutMapping("/updateStatus")
-    public ResponseEntity<ChatMessage> updateMessageStatus(
-            @ModelAttribute ChatMessage message
+    public ResponseEntity<?> updateMessageStatus(
+            @RequestBody ChatMessage message
     ) {
-        message.setStatus(MessageStatus.DELIVERED);
         boolean updatedMessage = chatMessageService.updateMessageStatus(message);
-        return (ResponseEntity<ChatMessage>) (updatedMessage ? ResponseEntity.ok() : ResponseEntity.badRequest());
+        return updatedMessage ? ResponseEntity.ok().build() : ResponseEntity.badRequest().build();
+    }
+
+    @GetMapping("/messages/{senderId}")
+    public List<ChatMessage> getMessagesFromSender(@PathVariable String senderId) {
+        return chatMessageService.getMessagesFromSender(senderId);
     }
 
 }

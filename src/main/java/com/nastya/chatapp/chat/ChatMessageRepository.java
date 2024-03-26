@@ -8,8 +8,10 @@ import java.util.Optional;
 public interface ChatMessageRepository extends MongoRepository<ChatMessage,String> {
     List<ChatMessage> findByChatId(String s);
 
-    List<ChatMessage> findBySenderIdAndRecipientIdAndStatus(String senderId, String recipientId, MessageStatus messageStatus);
+    List<ChatMessage> findBySenderIdAndStatus(String senderId, MessageStatus messageStatus);
 
 
     Optional<ChatMessage> findById(String Id);
+
+    List<ChatMessage> findBySenderId(String senderId);
 }

@@ -68,6 +68,7 @@ async function findAndDisplayConnectedUsers() {
 async function findAndDisplayOfflineUsers() {
     const offlineUserResponse = await fetch('/offlineUsers');
     let offlineUsers = await offlineUserResponse.json();
+    offlineUsers = offlineUsers.filter(user => user.nickName !== nickname);
     const offlineUsersList = document.getElementById('offlineUsers');
     offlineUsersList.innerHTML = '';
     offlineUsers.forEach(user => {
@@ -162,15 +163,24 @@ function displayMessage(senderId, content) {
     message.textContent = content;
     messageContainer.appendChild(message);
     chatArea.appendChild(messageContainer);
-    sendStatus(message);
 }
+
 function sendStatus(data){
+     const mas ={
+         id: data.id,
+         chatId: data.chatId,
+         senderId: data.senderId,
+         recipientId: data.recipientId,
+         content: data.content,
+         timestamp: data.timestamp,
+         status: data.status
+     }
 
     $.ajax({
         url: '/updateStatus',
         type: 'PUT',
         contentType: 'application/json',
-        data: JSON.stringify(data),
+        data: JSON.stringify(mas),
         success: function(response) {
             console.log('Request successful');
         },
@@ -186,9 +196,12 @@ async function fetchAndDisplayUserChat() {
     chatArea.innerHTML = '';
     userChat.forEach(chat => {
         displayMessage(chat.senderId, chat.content);
+         sendStatus(chat);
+        console.log("СООБЩЕНИЯ:"+chat);
     });
     chatArea.scrollTop = chatArea.scrollHeight;
-    sendStatus(userChatResponse);
+
+
 }
 
 
@@ -217,12 +230,26 @@ function sendMessage(event) {
     event.preventDefault();
 }
 
+async function getAllMessagesFromSender(senderId) {
+    try {
+        const response = await fetch(`/messages/${senderId}`); // Предположим, что это ваш эндпоинт на сервере для получения всех сообщений от определенного отправителя
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        } else {
+            throw new Error('Failed to fetch messages from sender');
+        }
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
 
 async function onMessageReceived(payload) {
-     await findAndDisplayConnectedUsers();
+    await findAndDisplayConnectedUsers();
     await findAndDisplayOfflineUsers();
-    console.log('Message received', payload);
     const message = JSON.parse(payload.body);
+
     if (selectedUserId && selectedUserId === message.senderId) {
         displayMessage(message.senderId, message.content);
         chatArea.scrollTop = chatArea.scrollHeight;
@@ -233,14 +260,19 @@ async function onMessageReceived(payload) {
     } else {
         messageForm.classList.add('hidden');
     }
-    console.log(message);
+
     const notifiedUser = document.querySelector(`#${message.senderId}`);
-    if (notifiedUser && !notifiedUser.classList.contains('active')) {
-        const nbrMsg = notifiedUser.querySelector('.nbr-msg');
-        nbrMsg.classList.remove('hidden');
-        nbrMsg.textContent = '';
-    }
+    const allMessagesFromSender = await getAllMessagesFromSender(notifiedUser.id);
+    console.log(allMessagesFromSender);
+
+        console.log(notifiedUser)
+         if (allMessagesFromSender.some(msg => msg.status === 'RECEIVED')) {
+             const nbrMsg = notifiedUser.querySelector('.nbr-msg');
+             nbrMsg.classList.remove('hidden');
+             nbrMsg.textContent = '';
+         }
 }
+
 
 function onLogout() {
     stompClient.send("/app/user.disconnectUser",

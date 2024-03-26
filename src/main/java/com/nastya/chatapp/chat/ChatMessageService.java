@@ -51,9 +51,18 @@ public class ChatMessageService {
     public boolean updateMessageStatus(ChatMessage message) {
         ChatMessage messageChat = repository.findById(message.getId()).orElse(null);
         if (messageChat!=null && messageChat.getStatus()!=null){
+            messageChat.setStatus(MessageStatus.DELIVERED);
             repository.save(messageChat);
             return true;
         }
         return false;
+    }
+
+    public List<ChatMessage> getReceivedMessagesByUserId(String userId) {
+        return repository.findBySenderIdAndStatus(userId,MessageStatus.RECEIVED);
+    }
+
+    public List<ChatMessage> getMessagesFromSender(String senderId) {
+        return repository.findBySenderId(senderId);
     }
 }
